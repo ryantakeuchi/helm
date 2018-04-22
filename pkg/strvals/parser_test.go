@@ -65,11 +65,27 @@ func TestSetIndex(t *testing.T) {
 }
 
 func TestParseSet(t *testing.T) {
+	testsString := []struct {
+		str    string
+		expect map[string]interface{}
+		err    bool
+	}{
+		{
+			str:    "long_int_string=1234567890",
+			expect: map[string]interface{}{"long_int_string": "1234567890"},
+			err:    false,
+		},
+	}
 	tests := []struct {
 		str    string
 		expect map[string]interface{}
 		err    bool
 	}{
+		{
+			"name1=null,f=false,t=true",
+			map[string]interface{}{"name1": nil, "f": false, "t": true},
+			false,
+		},
 		{
 			"name1=value1",
 			map[string]interface{}{"name1": "value1"},
@@ -96,6 +112,10 @@ func TestParseSet(t *testing.T) {
 		{
 			str:    "leading_zeros=00009",
 			expect: map[string]interface{}{"leading_zeros": "00009"},
+		},
+		{
+			str:    "long_int=1234567890",
+			expect: map[string]interface{}{"long_int": 1234567890},
 		},
 		{
 			str: "name1,name2=",
@@ -282,6 +302,31 @@ func TestParseSet(t *testing.T) {
 			t.Errorf("%s: Expected:\n%s\nGot:\n%s", tt.str, y1, y2)
 		}
 	}
+	for _, tt := range testsString {
+		got, err := ParseString(tt.str)
+		if err != nil {
+			if tt.err {
+				continue
+			}
+			t.Fatalf("%s: %s", tt.str, err)
+		}
+		if tt.err {
+			t.Errorf("%s: Expected error. Got nil", tt.str)
+		}
+
+		y1, err := yaml.Marshal(tt.expect)
+		if err != nil {
+			t.Fatal(err)
+		}
+		y2, err := yaml.Marshal(got)
+		if err != nil {
+			t.Fatalf("Error serializing parsed value: %s", err)
+		}
+
+		if string(y1) != string(y2) {
+			t.Errorf("%s: Expected:\n%s\nGot:\n%s", tt.str, y1, y2)
+		}
+	}
 }
 
 func TestParseInto(t *testing.T) {
@@ -325,7 +370,7 @@ func TestToYAML(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expect := "name: value\n"
+	expect := "name: value"
 	if o != expect {
 		t.Errorf("Expected %q, got %q", expect, o)
 	}

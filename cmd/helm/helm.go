@@ -30,6 +30,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 
+	// Import to initialize client auth plugins.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/helm/pkg/helm"
 	helm_env "k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/helm/portforwarder"
@@ -165,7 +167,7 @@ func markDeprecated(cmd *cobra.Command, notice string) *cobra.Command {
 	return cmd
 }
 
-func setupConnection(c *cobra.Command, args []string) error {
+func setupConnection() error {
 	if settings.TillerHost == "" {
 		config, client, err := getKubeClient(settings.KubeContext)
 		if err != nil {
@@ -214,7 +216,7 @@ func prettyError(err error) error {
 	}
 	// If it's grpc's error, make it more user-friendly.
 	if s, ok := status.FromError(err); ok {
-		return s.Err()
+		return fmt.Errorf(s.Message())
 	}
 	// Else return the original error.
 	return err
@@ -266,7 +268,7 @@ func ensureHelmClient(h helm.Interface) helm.Interface {
 }
 
 func newClient() helm.Interface {
-	options := []helm.Option{helm.Host(settings.TillerHost)}
+	options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
 
 	if tlsVerify || tlsEnable {
 		if tlsCaCertFile == "" {

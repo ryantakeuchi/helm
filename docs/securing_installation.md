@@ -41,6 +41,7 @@ Helm and Tiller are designed to install, remove, and modify logical applications
 Specific users and teams -- developers, operators, system and network administrators -- will need their own portion of the cluster in which they can use Helm and Tiller without risking other portions of the cluster. This means using a Kubernetes cluster with RBAC enabled and Tiller configured to enforce them. For more information about using RBAC in Kubernetes, see [Using RBAC Authorization](rbac.md).
 
 #### Tiller and User Permissions
+
 Tiller in its current form does not provide a way to map user credentials to specific permissions within Kubernetes. When Tiller is running inside of the cluster, it operates with the permissions of its service account. If no service account name is supplied to Tiller, it runs with the default service account for that namespace. This means that all Tiller operations on that server are executed using the Tiller pod's credentials and permissions. 
 
 To properly limit what Tiller itself can do, the standard Kubernetes RBAC mechanisms must be attached to Tiller, including Roles and RoleBindings that place explicit limits on what things a Tiller instance can install, and where. 
@@ -70,7 +71,7 @@ Enabling this feature currently requires setting the `--storage=secret` flag in 
 
 Because of the relative longevity of Helm, the Helm chart ecosystem evolved without the immediate concern for cluster-wide control, and especially in the developer space this makes complete sense. However, charts are a kind of package that not only installs containers you may or may not have validated yourself, but it may also install into more than one namespace. 
 
-As with all shared software, in a controlled or shared environment you must validate all software you install yourself _before_ you install it. If you have secured Tiller with TLS and have installed it with permissions to only one or a subset of namespaces, some charts may fail to install -- but in these environments, that is exactly what you want. If you need to use the chart, you may have to work with the creator or modify it yourself in order to use it securely in a mulitenant cluster with proper RBAC rules applied. The `helm template` command renders the chart locally and displays the output. 
+As with all shared software, in a controlled or shared environment you must validate all software you install yourself _before_ you install it. If you have secured Tiller with TLS and have installed it with permissions to only one or a subset of namespaces, some charts may fail to install -- but in these environments, that is exactly what you want. If you need to use the chart, you may have to work with the creator or modify it yourself in order to use it securely in a multitenant cluster with proper RBAC rules applied. The `helm template` command renders the chart locally and displays the output. 
 
 Once vetted, you can use Helm's provenance tools to [ensure the provenance and integrity of charts](provenance.md) that you use.
 
@@ -94,10 +95,10 @@ If these steps are followed, an example `helm init` command might look something
 $ helm init \
 --tiller-tls \
 --tiller-tls-verify \
---tiller-tls-ca-cert=ca.pem \
 --tiller-tls-cert=cert.pem \
 --tiller-tls-key=key.pem \
---service-account=accountname  
+--tls-ca-cert=ca.pem \
+--service-account=accountname
 ```
 
 This command will start Tiller with both strong authentication over gRPC, and a service account to which RBAC policies have been applied. 

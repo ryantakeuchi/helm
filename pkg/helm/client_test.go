@@ -1,7 +1,5 @@
-// +build !windows
-
 /*
-Copyright 2017 The Kubernetes Authors All rights reserved.
+Copyright 2016 The Kubernetes Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,14 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package helm
 
 import (
-	"os"
-
-	"k8s.io/helm/pkg/helm/helmpath"
+	"testing"
+	"time"
 )
 
-func createLink(indexFile, cacheFile string, home helmpath.Home) error {
-	return os.Symlink(indexFile, cacheFile)
+func TestNewClient(t *testing.T) {
+	helmClient := NewClient()
+	if helmClient.opts.connectTimeout != 5*time.Second {
+		t.Errorf("expected default timeout duration to be 5 seconds, got %v", helmClient.opts.connectTimeout)
+	}
+
+	helmClient = NewClient(ConnectTimeout(60))
+	if helmClient.opts.connectTimeout != time.Minute {
+		t.Errorf("expected timeout duration to be 1 minute, got %v", helmClient.opts.connectTimeout)
+	}
 }
